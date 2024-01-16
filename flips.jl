@@ -166,7 +166,7 @@ function greedysearch(allowedinds, kflips, x0, pars)
     xopt = deepcopy(x0)
     #calculate distance between reference and initial coefficients
     dist0 = distance(refcoeffs, coeffs0)
-    comb = Inf
+    comb = 0
     notflipped = collect(1:n)
     #get all possible combinations of the allowed indices in groups of kflips
     mat2flip = collect(combinations(allowedinds, kflips))
@@ -181,7 +181,7 @@ function greedysearch(allowedinds, kflips, x0, pars)
         #get distance to reference model
         dist = distance(refcoeffs, newcoeffs)
         if dist < dist0
-             #set new minimum distance
+            #set new minimum distance
             dist0 = dist
             #set new optimal x
             xopt = x
@@ -190,64 +190,87 @@ function greedysearch(allowedinds, kflips, x0, pars)
             allowedinds = findall(flipvec .== 1)
         end
     end
-    #after traversing through all 1-flips, there are 2 options; 
-    if length(allowedinds) == nvars
-        println("no better answer was found")
-        #1: nothing has been flipped. In which case, we should break the search (posible extension to increase kflips)
-        return x0
-    else
+    #after traversing through all kflips, there are 2 options; 
+    if length(allowedinds) !== nvars
+        #something has been flipped, call the function again, changing the allowedinds vector
         println("Combination number ", comb, " was succesful")
-        #2: something has been flipped. In which case we call the function again, changing the allowedinds vector
         return greedysearch(allowedinds, kflips, xopt, pars)
+    else
+        #2: nothing has been flipped, break the search
+        println("no better answer was found")
+        return (x0, dist0)
     end
 end
 
-nmax = 4
-seed = 2
-rng = MersenneTwister(seed)
-nsim = 100
+"""
+traverse through kflips
+"""
+function searchthroughkflips(allowedinds, kflipsmax, x0, pars)
+    nvar = lenght(x0)
+    xoptmat = zeros((kflipsmax, nvar))
+    distvec = zeros(kflipsmax)
+    for kflips in 1:kflipsmax
+        #minimize
+        xopt, dist = greedysearch(allowedinds, kflips, x0, pars)
+        #store
+        xoptmat[kflips,:] = xopt
+        distvec[kflips] = dist
+    end
+    bestsolind = argmin(distvec)
+    return xoptmat[bestsolind]
+end
 
-#initialize system by sampling parameters
-#declare polynomial indeterminates as global variables
-for n in 4:nmax
-    for sim in 1:nsim
-        @var x[1:n]
-        global vars = x
-        #declare model parameters
-        A = randn(rng, (n,n))
-        r = randn(rng, (n))
-        #get parameters Aij and ri whose signs are to be optimized
-        x0 = [collect(Iterators.flatten(A)); r] 
-        nvars = length(x0)
-        B = randn(rng, (n, n))
-        refcoeffs = pars2coeffs(x0, B, n)
-        #construct reference system 
-        pars = (refcoeffs, B, n)
-        #minimize with bruteforce
-        xoptbrute = bruteforcesearch(x0, pars)
-        #allowed indices to flip
-        allowedinds = collect(1:length(x0))
-        #minimizie with greedy algorithm
-        bestfound = false
-        kflips = 1
-        same = false
-        while !bestfound
-            xoptgreedy = greedysearch(allowedinds, kflips, x0, pars)
-            #check if answer is the same
-            same = xoptgreedy == xoptbrute
-            if same
-                println("found best answer")
-                bestfound = true
-            else
-                println("increase number of kflips")
-                kflips += 1
+"""
+main code
+"""
+function main()
+    nmax = 4
+    seed = 2
+    rng = MersenneTwister(seed)
+    nsim = 2000
+
+    #initialize system by sampling parameters
+    #declare polynomial indeterminates as global variables
+    for n in 2:nmax
+        for sim in 1:nsim
+            @var x[1:n]
+            global vars = x
+            #declare model parameters
+            A = randn(rng, (n,n))
+            r = randn(rng, (n))
+            #get parameters Aij and ri whose signs are to be optimized
+            x0 = [collect(Iterators.flatten(A)); r] 
+            nvars = length(x0)
+            B = randn(rng, (n, n))
+            refcoeffs = pars2coeffs(x0, B, n)
+            #construct reference system 
+            pars = (refcoeffs, B, n)
+            #minimize with bruteforce
+            xoptbrute = bruteforcesearch(x0, pars)
+            xoptgreedy = ones(length(x0))
+            #allowed indices to flip
+            allowedinds = collect(1:length(x0))
+            #minimizie with greedy algorithm
+            bestfound = false
+            kflips = 1
+            same = false
+            while !bestfound
+                xoptgreedy = greedysearch(allowedinds, kflips, x0, pars)
+                #check if answer is the same
+                same = xoptgreedy == xoptbrute
+                if same
+                    println("found best answer for ", kflips, "flips")
+                    bestfound = true
+                else
+                    print("increase number of kflips")
+                    kflips += 1
+                end
             end
-        end
-        
-        resultdn = [n sim kflips]
-        #save for this matrix of coefficients
-        open("compare_greedy_brute.csv", "a") do io
-            writedlm(io, resultdn, ' ')
+            resultdn = [n sim kflips]
+            #save for this matrix of coefficients
+            open("compare_greedy_brute.csv", "a") do io
+                writedlm(io, resultdn, ' ')
+            end
         end
     end
 end
