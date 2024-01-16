@@ -100,10 +100,10 @@ end
 #how deep in number of simultaneous flips to go
 searchdepth = 0.25
 #sample parameters
-nmax = 5
-seed = 4
+nmax = 3
+seed = parse(Int, ARGS[1])
 rng = MersenneTwister(seed)
-nsim = 2000
+nsim = 2
 
 #initialize system by sampling parameters
 #declare polynomial indeterminates as global variables
@@ -144,13 +144,13 @@ for sim in 1:nsim
         println("optimized system")
         result_dn_opt = solvecount(vars, (Aopt, ropt, abs.(B)), n, glvtype2, glvtype2poly)
         #save for this matrix of coefficients
-        open("feas_results_ref.csv", "a") do io
+        open("../data/feas_results_ref.csv", "a") do io
             writedlm(io, result_dn_ref, ' ')
         end
-        open("feas_results.csv", "a") do io
+        open("../data/feas_results.csv", "a") do io
             writedlm(io, result_dn, ' ')
         end
-        open("feas_results_opt.csv", "a") do io
+        open("../data/feas_results_opt.csv", "a") do io
             writedlm(io, result_dn_opt, ' ')
         end
     end
