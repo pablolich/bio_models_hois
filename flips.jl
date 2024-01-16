@@ -172,6 +172,9 @@ function greedysearch(allowedinds, kflips, x0, pars)
     mat2flip = collect(combinations(allowedinds, kflips))
     ncombs = length(mat2flip)
     for i in 1:ncombs
+        if rem(i,1e4) == 0 && i > 0
+            println("Iteration: ", i)
+        end
         #turn to flipping vector
         flipvec = getvec4flip(nvarori, mat2flip[i], allowedinds)
         #flip corresponding indices of x0
@@ -194,6 +197,7 @@ function greedysearch(allowedinds, kflips, x0, pars)
     if length(allowedinds) !== nvars
         #something has been flipped, call the function again, changing the allowedinds vector
         println("Combination number ", comb, " was succesful")
+        println("fix advantageous flips, move down in recursion")
         return greedysearch(allowedinds, kflips, xopt, pars)
     else
         #2: nothing has been flipped, break the search
@@ -206,10 +210,13 @@ end
 traverse through kflips
 """
 function searchthroughkflips(allowedinds, kflipsmax, x0, pars)
-    nvar = lenght(x0)
+    #number of variables
+    nvar = length(x0)
+    #initialize storing of best solution, and score per kflips
     xoptmat = zeros((kflipsmax, nvar))
     distvec = zeros(kflipsmax)
     for kflips in 1:kflipsmax
+        println("trying with ", kflips, " (out of ", kflipsmax, ")", " at a time")
         #minimize
         xopt, dist = greedysearch(allowedinds, kflips, x0, pars)
         #store
@@ -217,7 +224,7 @@ function searchthroughkflips(allowedinds, kflipsmax, x0, pars)
         distvec[kflips] = dist
     end
     bestsolind = argmin(distvec)
-    return xoptmat[bestsolind]
+    return xoptmat[bestsolind,:]
 end
 
 """

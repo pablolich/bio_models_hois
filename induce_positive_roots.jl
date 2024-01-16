@@ -81,20 +81,35 @@ function glvtype2(vars, pars)
     Aeff = A ./ (1 .+ BDx)
     Aeff[diagind(Aeff)] .= diag(A)
     return r + Aeff*vars
+end 
+
+"""
+get a computationaly feasible kflips depth
+"""
+function getkflipsmax(nvar)
+    ncombbool = [binomial(nvar, i) for i in 1:nvar] .< 1e6
+    zeroinds = findall(ncombbool .== 0)
+    if isempty(zeroinds)
+        kflipsmax = length(ncombbool)
+    else
+        kflipsmax = minimum(zeroinds) - 1
+    end
+    return kflipsmax
 end
 
 #how deep in number of simultaneous flips to go
 searchdepth = 0.25
 #sample parameters
-nmax = 3
-seed = 1
+nmax = 5
+seed = 4
 rng = MersenneTwister(seed)
-nsim = 2
+nsim = 2000
 
 #initialize system by sampling parameters
 #declare polynomial indeterminates as global variables
-for n in 2:nmax
-    for sim in 1:nsim
+for sim in 1:nsim
+    for n in 2:nmax 
+        println("simulation: ", sim, " diversity: ", n)
         @var x[1:n]
         global vars = x
         #declare model parameters
@@ -113,12 +128,14 @@ for n in 2:nmax
         #allowed indices to flip
         allowedinds = collect(1:length(x0))
         #determine number of kflips
-        kflipsmax = ceil(n*(n+1)*searchdepth)
+        kflipsmaxtheo = Int(ceil(n*(n+1)*searchdepth))
+        kflipsmaxcomp = getkflipsmax(nvars)
+        kflipsmax = minimum([kflipsmaxtheo, kflipsmaxcomp])
         #minimize with greedy algorithm
         xoptgreedy = searchthroughkflips(allowedinds, kflipsmax, x0, pars)
         #form optimal parameters
-        Aopt = reshape(xopgreedy[1:(n*n)], (n, n))
-        ropt = xopgreedy[(n*n+1):end]
+        Aopt = reshape(xoptgreedy[1:(n*n)], (n, n))
+        ropt = xoptgreedy[(n*n+1):end]
         #solve and count solutions
         println("reference system")
         result_dn_ref = solvecount(vars, (A, r, B), n, glvtype2, glvtype2poly)
