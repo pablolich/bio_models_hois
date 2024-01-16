@@ -181,8 +181,7 @@ function greedysearch(allowedinds, kflips, x0, pars)
         #get distance to reference model
         dist = distance(refcoeffs, newcoeffs)
         if dist < dist0
-            println("combination number ", i, " was succesful")
-            #set new minimum distance
+             #set new minimum distance
             dist0 = dist
             #set new optimal x
             xopt = x
@@ -197,7 +196,7 @@ function greedysearch(allowedinds, kflips, x0, pars)
         #1: nothing has been flipped. In which case, we should break the search (posible extension to increase kflips)
         return x0
     else
-        println("Combination number ", comb, "was succesful")
+        println("Combination number ", comb, " was succesful")
         #2: something has been flipped. In which case we call the function again, changing the allowedinds vector
         return greedysearch(allowedinds, kflips, xopt, pars)
     end
@@ -206,11 +205,11 @@ end
 nmax = 4
 seed = 2
 rng = MersenneTwister(seed)
-nsim = 2000
+nsim = 100
 
 #initialize system by sampling parameters
 #declare polynomial indeterminates as global variables
-for n in 2:nmax
+for n in 4:nmax
     for sim in 1:nsim
         @var x[1:n]
         global vars = x
@@ -240,14 +239,14 @@ for n in 2:nmax
                 println("found best answer")
                 bestfound = true
             else
-                print("increase number of kflips")
+                println("increase number of kflips")
                 kflips += 1
             end
         end
         
-        resultdn = [n sim same kflips]
+        resultdn = [n sim kflips]
         #save for this matrix of coefficients
-        open("Desktop/compare_greedy_brute.csv", "a") do io
+        open("compare_greedy_brute.csv", "a") do io
             writedlm(io, resultdn, ' ')
         end
     end
