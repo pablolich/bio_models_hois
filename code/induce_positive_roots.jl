@@ -101,9 +101,10 @@ end
 searchdepth = 0.25
 #sample parameters
 nmax = 3
-seed = parse(Int, ARGS[1])
+#seed = parse(Int, ARGS[1])
+seed = 2
 rng = MersenneTwister(seed)
-nsim = 2
+nsim = 10
 
 #initialize system by sampling parameters
 #declare polynomial indeterminates as global variables
@@ -144,13 +145,13 @@ for sim in 1:nsim
         println("optimized system")
         result_dn_opt = solvecount(vars, (Aopt, ropt, abs.(B)), n, glvtype2, glvtype2poly)
         #save for this matrix of coefficients
-        open("../data/feas_results_ref.csv", "a") do io
+        open("../data/feas_results_ref"*string(seed)*".csv", "a") do io
             writedlm(io, result_dn_ref, ' ')
         end
-        open("../data/feas_results.csv", "a") do io
+        open("../data/feas_results"*string(seed)*".csv", "a") do io
             writedlm(io, result_dn, ' ')
         end
-        open("../data/feas_results_opt.csv", "a") do io
+        open("../data/feas_results_opt"*string(seed)*".csv", "a") do io
             writedlm(io, result_dn_opt, ' ')
         end
     end
