@@ -1,4 +1,5 @@
 include("flips.jl")
+include("models.jl")
 
 function is_feasible(r::PathResult)
     return all(real(r.solution) .> 0)
@@ -49,8 +50,12 @@ function certifysolutions(model, sols, pars)
     return cert_vec
 end
 
+"""
+solve model_poly (filter out solutions that are not of model)
+in variables x, for parameters pars, and n species
+"""
 function solvecount(x, pars, n, model, model_poly)
-    #build system
+    #build system and solve it
     syst = System(model_poly(x, pars))
     res = HomotopyContinuation.solve(syst, stop_early_cb = findfeasible,
                 compile = false,
@@ -100,11 +105,11 @@ end
 #how deep in number of simultaneous flips to go
 searchdepth = 0.25
 #sample parameters
-nmax = 3
+nmax = 6
 #seed = parse(Int, ARGS[1])
 seed = 2
 rng = MersenneTwister(seed)
-nsim = 10
+nsim = 2000
 
 #initialize system by sampling parameters
 #declare polynomial indeterminates as global variables
@@ -122,37 +127,38 @@ for sim in 1:nsim
         nvars = length(x0)
         #sample functional response coefficients (fixed)
         B = randn(rng, (n, n))
+        B[diagind(B)] .= 0
         #create polynomial coefficients of reference systems (Bij are positive or negative)
-        refcoeffs = pars2coeffs(x0, B, n)
+        #refcoeffs = pars2coeffs(x0, B, n)
         #construct parameters of reference system 
-        pars = (refcoeffs, B, n)
+        #pars = (refcoeffs, B, n)
         #allowed indices to flip
-        allowedinds = collect(1:length(x0))
+        #allowedinds = collect(1:length(x0))
         #determine number of kflips
-        kflipsmaxtheo = Int(ceil(n*(n+1)*searchdepth))
-        kflipsmaxcomp = getkflipsmax(nvars)
-        kflipsmax = minimum([kflipsmaxtheo, kflipsmaxcomp])
+        #kflipsmaxtheo = Int(ceil(n*(n+1)*searchdepth))
+        #kflipsmaxcomp = getkflipsmax(nvars)
+        #kflipsmax = minimum([kflipsmaxtheo, kflipsmaxcomp])
         #minimize with greedy algorithm
-        xoptgreedy = searchthroughkflips(allowedinds, kflipsmax, x0, pars)
+        #xoptgreedy = searchthroughkflips(allowedinds, kflipsmax, x0, pars)
         #form optimal parameters
-        Aopt = reshape(xoptgreedy[1:(n*n)], (n, n))
-        ropt = xoptgreedy[(n*n+1):end]
+        #Aopt = reshape(xoptgreedy[1:(n*n)], (n, n))
+        #ropt = xoptgreedy[(n*n+1):end]
         #solve and count solutions
         println("reference system")
         result_dn_ref = solvecount(vars, (A, r, B), n, glvtype2, glvtype2poly)
         println("real system")
         result_dn = solvecount(vars, (A, r, abs.(B)), n, glvtype2, glvtype2poly)
         println("optimized system")
-        result_dn_opt = solvecount(vars, (Aopt, ropt, abs.(B)), n, glvtype2, glvtype2poly)
+        #result_dn_opt = solvecount(vars, (Aopt, ropt, abs.(B)), n, glvtype2, glvtype2poly)
         #save for this matrix of coefficients
-        open("../data/feas_results_ref"*string(seed)*".csv", "a") do io
+        open("../data/feas_results_ref.csv", "a") do io
             writedlm(io, result_dn_ref, ' ')
         end
-        open("../data/feas_results"*string(seed)*".csv", "a") do io
+        open("../data/feas_results_null.csv", "a") do io
             writedlm(io, result_dn, ' ')
         end
-        open("../data/feas_results_opt"*string(seed)*".csv", "a") do io
-            writedlm(io, result_dn_opt, ' ')
-        end
+        #open("../data/feas_results_opt"*string(seed)*".csv", "a") do io
+        #    writedlm(io, result_dn_opt, ' ')
+        #end
     end
 end
