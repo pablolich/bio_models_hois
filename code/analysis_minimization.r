@@ -3,13 +3,13 @@ library(ggplot2)
 
 
 
-dataref = read.table(file = "feas_results_ref.csv")
+dataref = read.table(file = "../data/feas_results_ref.csv")
 colnames(dataref) = c("n", "nsols", "nsolsreal", "nsolsfeas")
 dataref["model"] = "ref"
-data = read.table(file = "feas_results.csv")
+data = read.table(file = "../data/feas_results_null.csv")
 colnames(data) = c("n", "nsols", "nsolsreal", "nsolsfeas")
 data["model"] = "null"
-dataopt = read.table(file = "feas_results_opt.csv")
+dataopt = read.table(file = "../data/feas_results_opt.csv")
 colnames(dataopt) = c("n", "nsols", "nsolsreal", "nsolsfeas")
 dataopt["model"] = "opt"
 
