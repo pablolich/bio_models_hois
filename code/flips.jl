@@ -275,7 +275,7 @@ function main()
             end
             resultdn = [n sim kflips dist]
             #save for this matrix of coefficients
-            open("compare_greedy_brute.csv", "a") do io
+            open("comparedists_greedy_brute.csv", "a") do io
                 writedlm(io, resultdn, ' ')
             end
         end
