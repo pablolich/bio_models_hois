@@ -1,7 +1,7 @@
 library(tidyverse)
 
-data = read.table("compare_greedy_brute.csv")
-colnames(data) = c("n", "sim", "flips")
+data = read.table("comparedists_greedy_brute.csv")
+colnames(data) = c("n", "sim", "flips", "dist", "best")
 
 toplot = data %>% 
   group_by(n) %>% 

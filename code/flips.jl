@@ -254,7 +254,8 @@ function main()
             pars = (refcoeffs, B, n)
             #minimize with bruteforce
             xoptbrute = bruteforcesearch(x0, pars)
-            xoptgreedy = ones(length(x0))
+            xoptgreedy = ones(nvars)
+            distvec = zeros(nvars)
             #allowed indices to flip
             allowedinds = collect(1:length(x0))
             #minimizie with greedy algorithm
@@ -268,15 +269,13 @@ function main()
                 if same
                     println("found best answer for ", kflips, "flips")
                     bestfound = true
-                else
-                    print("increase number of kflips")
-                    kflips += 1
                 end
-            end
-            resultdn = [n sim kflips dist]
-            #save for this matrix of coefficients
-            open("comparedists_greedy_brute.csv", "a") do io
-                writedlm(io, resultdn, ' ')
+                #save for this matrix of coefficients
+                resultdn = [n sim kflips dist bestfound]
+                open("comparedists_greedy_brute.csv", "a") do io
+                    writedlm(io, resultdn, ' ')
+                end
+                kflips += 1
             end
         end
     end
