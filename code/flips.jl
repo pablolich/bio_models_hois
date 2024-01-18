@@ -262,7 +262,7 @@ function main()
             kflips = 1
             same = false
             while !bestfound
-                xoptgreedy = greedysearch(allowedinds, kflips, x0, pars)
+                xoptgreedy, dist = greedysearch(allowedinds, kflips, x0, pars)
                 #check if answer is the same
                 same = xoptgreedy == xoptbrute
                 if same
@@ -273,7 +273,7 @@ function main()
                     kflips += 1
                 end
             end
-            resultdn = [n sim kflips]
+            resultdn = [n sim kflips dist]
             #save for this matrix of coefficients
             open("compare_greedy_brute.csv", "a") do io
                 writedlm(io, resultdn, ' ')
